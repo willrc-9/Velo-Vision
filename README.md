@@ -1,7 +1,7 @@
 # ⚾ VeloVision - Look through your catcher's eyes
 **Real-Time Video Delay & Instant Replay for Baseball Training**
 
-[![Download Windows](https://img.shields.io/badge/Download-Windows-blue?logo=windows&style=for-the-badge)](https://github.com/YOUR_USERNAME/VeloVision/releases)
+[![Download Windows](https://img.shields.io/badge/Download-Windows-blue?logo=windows&style=for-the-badge)](https://github.com/willrc-9/Velo-Vision/releases)
 ![Version](https://img.shields.io/badge/version-0.2-green?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-orange?style=for-the-badge)
 
