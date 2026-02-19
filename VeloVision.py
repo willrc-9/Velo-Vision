@@ -7,31 +7,34 @@ from PIL import Image, ImageTk
 from collections import deque
 from datetime import datetime
 import os
+import json
 
+from threaded_camera import ThreadedGoPro
 
-
-# Try importing pygrabber for camera names
+# Try importing pygrabber for camera names (safe fallback for Linux)
 try:
     from pygrabber.dshow_graph import FilterGraph
+
     HAS_PYGRABBER = True
 except ImportError:
     HAS_PYGRABBER = False
 
+
 class VeloVisionApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("VeloVision 0.4")
+        self.root.title("VeloVision 0.4 - Catcher POV")
         self.root.geometry("1000x700")
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
+        # --- YOUR IPHONE URL ---
+        self.iphone_url = ""
+
         # --- CONFIGURATION DEFAULTS ---
-        self.camera_index = 0
-        self.delay_seconds = 4.0
-        self.replay_seconds = 10.0
-        self.playback_speed = 0.5
+        self.load_config()  # <--- This handles the URL and all numbers now
         self.is_recording = False
         self.is_replay_mode = False
-        self.fps = 60.0
+        self.fps = 30.0  # Standard for smartphone streams
 
         # --- VIDEO STATE ---
         self.cap = None
@@ -69,7 +72,6 @@ class VeloVisionApp:
         # Settings Menu
         settings_menu = Menu(menubar, tearoff=0)
         settings_menu.add_command(label="Preferences...", command=self.open_preferences)
-        settings_menu.add_command(label="Select Camera...", command=self.open_camera_select)
         menubar.add_cascade(label="Settings", menu=settings_menu)
 
         # View Menu
@@ -78,34 +80,28 @@ class VeloVisionApp:
         menubar.add_cascade(label="View", menu=view_menu)
 
     def create_main_layout(self):
-        # 1. Video Area (Black Background)
         self.video_frame = tk.Frame(self.root, bg="black")
         self.video_frame.pack(fill=tk.BOTH, expand=True)
 
         self.video_label = tk.Label(self.video_frame, bg="black")
         self.video_label.pack(fill=tk.BOTH, expand=True)
 
-        # 2. Controls Bar (Bottom)
         self.controls_frame = tk.Frame(self.root, bg="#333", height=60)
         self.controls_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
-        # Buttons
         style = ttk.Style()
         style.configure("TButton", padding=6)
 
-        self.btn_replay = ttk.Button(self.controls_frame, text="⏪ INSTANT REPLAY (Space)",
-                                     command=self.trigger_replay)
+        self.btn_replay = ttk.Button(self.controls_frame, text="⏪ INSTANT REPLAY (Space)", command=self.trigger_replay)
         self.btn_replay.pack(side=tk.LEFT, padx=20, pady=10)
 
-        self.btn_record = tk.Button(self.controls_frame, text="⚫ REC", bg="#444", fg="red",
-                                    font=("Arial", 10, "bold"), command=self.toggle_record)
+        self.btn_record = tk.Button(self.controls_frame, text="⚫ REC", bg="#444", fg="red", font=("Arial", 10, "bold"),
+                                    command=self.toggle_record)
         self.btn_record.pack(side=tk.RIGHT, padx=20, pady=10)
 
-        # Status Label
         self.lbl_status = tk.Label(self.controls_frame, text="Ready", bg="#333", fg="white")
         self.lbl_status.pack(side=tk.LEFT, padx=10)
 
-        # Bind Key Events
         self.root.bind('<space>', lambda e: self.trigger_replay(e))
         self.root.bind('<f>', lambda e: self.toggle_fullscreen())
         self.root.bind('<q>', lambda e: self.on_close())
@@ -121,35 +117,46 @@ class VeloVisionApp:
         self.thread.start()
 
     def update_ui_loop(self):
-        """Checks for new frames and updates the UI safely on the main thread"""
-        # Always show whatever is in the latest_frame variable
-        # This works for both Live Feed AND Replay now.
         if self.latest_frame is not None:
             self.show_frame(self.latest_frame)
-
-        # Schedule the next check in 15ms (approx 60 FPS)
         self.root.after(15, self.update_ui_loop)
 
     def video_loop(self):
-        self.cap = cv2.VideoCapture(self.camera_index)
-        self.cap.set(cv2.CAP_PROP_FPS, 60)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
-        if self.fps <= 0: self.fps = 60.0
+        if not self.iphone_url or self.iphone_url == "":
+            self.running = False
+            self.lbl_status.config(text="Go to Settings to enter Camera URL", fg="yellow")
+            return
 
+            # 1. Use the threaded iPhone stream
+            self.cap = ThreadedGoPro(self.iphone_url)
+        # 1. Use the threaded iPhone stream
+        self.cap = ThreadedGoPro(self.iphone_url)
+
+        # Wait for the first valid frame
+        frame = self.cap.read()
+        while frame is None and self.running:
+            time.sleep(0.1)
+            frame = self.cap.read()
+
+        if not self.running:
+            return
+
+        # Setup recording dimensions based on the iPhone frame
+        h, w = frame.shape[:2]
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.writer = cv2.VideoWriter(self.temp_filename, fourcc, 60.0, (w, h))
+        self.writer = cv2.VideoWriter(self.temp_filename, fourcc, self.fps, (w, h))
 
         self.update_buffer_sizes()
 
         while self.running:
-            ret, frame = self.cap.read()
-            if not ret:
-                break
+            # 2. Read from the threaded buffer
+            frame = self.cap.read()
+
+            # If network stutters, skip the loop logic for a millisecond
+            if frame is None:
+                time.sleep(0.01)
+                continue
 
             if self.is_recording and self.writer:
                 self.writer.write(frame)
@@ -158,16 +165,15 @@ class VeloVisionApp:
                 self.delay_buffer.append(frame)
                 self.replay_buffer.append(frame.copy())
 
-                # SAVE FRAME TO VARIABLE (DO NOT SHOW DIRECTLY)
                 if not self.is_replay_mode:
                     if len(self.delay_buffer) >= self.delay_buffer.maxlen:
                         self.latest_frame = self.delay_buffer[0]
                     else:
                         self.latest_frame = frame
 
-            time.sleep(0.005)
+            time.sleep(1.0 / self.fps)
 
-        self.cap.release()
+        self.cap.stop()
         if self.writer: self.writer.release()
 
     def show_frame(self, cv_frame):
@@ -204,30 +210,19 @@ class VeloVisionApp:
         self.lbl_status.config(text="REPLAYING... (Press SPACE to Stop)", fg="yellow")
 
         with self.frame_lock:
-            # Snapshot the buffer
             frames = list(self.replay_buffer)
 
-        # --- MATH FIX: Use self.fps instead of 30.0 ---
-        # This ensures it is always slow motion, no matter your camera speed.
-        if self.fps <= 0: self.fps = 30.0  # Safety check
-
-        # Formula: Time to wait = (Time per frame) / Speed Factor
-        # Example: (0.016s) / 0.5 = 0.032s wait
         wait_time = (1.0 / self.fps) / self.playback_speed
 
         for frame in frames:
-            # Stop if user hits Space
             if not self.is_replay_mode:
                 break
 
             display = frame.copy()
-            cv2.putText(display, f"REPLAY ({self.playback_speed}x)", (50, 80),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 255), 3)
+            cv2.putText(display, f"REPLAY ({self.playback_speed}x)", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1.5,
+                        (0, 255, 255), 3)
 
-            # --- STUTTER FIX: Just update the variable ---
             self.latest_frame = display
-
-            # Sleep for the calculated slow-motion time
             time.sleep(wait_time)
 
         self.is_replay_mode = False
@@ -240,40 +235,18 @@ class VeloVisionApp:
         else:
             self.btn_record.config(text="⚫ REC", fg="red", bg="#444")
 
-    def open_camera_select(self):
-        top = tk.Toplevel(self.root)
-        top.title("Select Camera")
-        top.geometry("300x150")
-
-        tk.Label(top, text="Available Cameras:").pack(pady=10)
-
-        cams = []
-        if HAS_PYGRABBER:
-            graph = FilterGraph()
-            cams = graph.get_input_devices()
-        else:
-            cams = [f"Camera {i}" for i in range(5)]
-
-        cam_var = tk.StringVar(value=cams[self.camera_index] if self.camera_index < len(cams) else cams[0])
-        dropdown = ttk.OptionMenu(top, cam_var, cam_var.get(), *cams)
-        dropdown.pack(pady=10)
-
-        def confirm():
-            try:
-                self.camera_index = cams.index(cam_var.get())
-                self.start_camera_thread()
-                top.destroy()
-            except:
-                pass
-
-        ttk.Button(top, text="Switch Camera", command=confirm).pack()
-
     def open_preferences(self):
         top = tk.Toplevel(self.root)
         top.title("Preferences")
-        top.geometry("400x300")
+        top.geometry("450x380")  # Made slightly taller to fit the new input
 
-        tk.Label(top, text="Delay (Seconds)").pack(pady=5)
+        # --- NEW: Camera URL Input ---
+        tk.Label(top, text="Wireless Camera URL:").pack(pady=(10, 0))
+        url_var = tk.StringVar(value=self.iphone_url)
+        tk.Entry(top, textvariable=url_var, width=50).pack(pady=5, padx=20)
+
+        # --- Existing Sliders ---
+        tk.Label(top, text="Delay (Seconds)").pack(pady=(10, 5))
         delay_var = tk.DoubleVar(value=self.delay_seconds)
         tk.Scale(top, variable=delay_var, from_=1, to=20, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=20)
 
@@ -287,10 +260,25 @@ class VeloVisionApp:
         tk.Scale(top, variable=hist_var, from_=5, to=30, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=20)
 
         def apply():
+            # Get the new URL and strip any accidental spaces
+            new_url = url_var.get().strip()
+            url_changed = (new_url != self.iphone_url)
+
+            # Apply all settings locally
+            self.iphone_url = new_url
             self.delay_seconds = delay_var.get()
             self.playback_speed = speed_var.get()
             self.replay_seconds = hist_var.get()
+
             self.update_buffer_sizes()
+
+            # --- NEW: Write to file ---
+            self.save_config()
+
+            # If the user typed a new IP, reboot the camera thread seamlessly
+            if url_changed and self.iphone_url != "":
+                self.start_camera_thread()
+
             top.destroy()
 
         ttk.Button(top, text="Apply Settings", command=apply).pack(pady=20)
@@ -302,6 +290,39 @@ class VeloVisionApp:
         self.delay_buffer = deque(self.delay_buffer, maxlen=max_delay)
         self.replay_buffer = deque(self.replay_buffer, maxlen=max_replay)
 
+    def load_config(self):
+        self.config_file = "velovision_config.json"
+
+        # Default fallback settings if the file doesn't exist yet
+        self.iphone_url = ""
+        self.delay_seconds = 4.0
+        self.replay_seconds = 10.0
+        self.playback_speed = 0.5
+
+        if os.path.exists(self.config_file):
+            try:
+                with open(self.config_file, 'r') as f:
+                    config = json.load(f)
+                    self.iphone_url = config.get("iphone_url", self.iphone_url)
+                    self.delay_seconds = config.get("delay_seconds", self.delay_seconds)
+                    self.replay_seconds = config.get("replay_seconds", self.replay_seconds)
+                    self.playback_speed = config.get("playback_speed", self.playback_speed)
+            except Exception as e:
+                print(f"Could not load config: {e}")
+
+    def save_config(self):
+        config = {
+            "iphone_url": self.iphone_url,
+            "delay_seconds": self.delay_seconds,
+            "replay_seconds": self.replay_seconds,
+            "playback_speed": self.playback_speed
+        }
+        try:
+            with open(self.config_file, 'w') as f:
+                json.dump(config, f, indent=4)
+        except Exception as e:
+            print(f"Could not save config: {e}")
+
     def toggle_fullscreen(self):
         is_fs = self.root.attributes("-fullscreen")
         self.root.attributes("-fullscreen", not is_fs)
@@ -312,11 +333,8 @@ class VeloVisionApp:
             return
 
         default_name = f"Bullpen_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.mp4"
-        path = filedialog.asksaveasfilename(
-            defaultextension=".mp4",
-            initialfile=default_name,
-            filetypes=[("MP4", "*.mp4")]
-        )
+        path = filedialog.asksaveasfilename(defaultextension=".mp4", initialfile=default_name,
+                                            filetypes=[("MP4", "*.mp4")])
 
         if path:
             import shutil
@@ -335,6 +353,7 @@ class VeloVisionApp:
                     os.remove(self.temp_filename)
                 except:
                     pass
+
 
 if __name__ == "__main__":
     root = tk.Tk()
