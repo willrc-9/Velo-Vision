@@ -19,7 +19,7 @@ Built with **Python** and **OpenCV**, it features an instant slow-motion replay 
 * **Hardware Support:** Works with standard Webcams, GoPros (via HDMI/CamLink), and USB Capture Cards.
 
 ## 🚀 Installation & Usage
-1.  Go to the [**Releases**](https://github.com/YOUR_USERNAME/VeloVision/releases) page.
+1.  Go to the [**Releases**](https://github.com/willrc-9/VeloVision/releases) page.
 2.  Download the latest `VeloVision.exe` file.
 3.  Run the application (No installation required).
     * *Note: Windows may flag the app as unrecognized. Click "More Info" -> "Run Anyway".*
