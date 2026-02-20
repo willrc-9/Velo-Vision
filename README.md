@@ -91,7 +91,7 @@ Record Button - Click the REC button in the UI to start saving the live feed. Go
 
 If you want to pull the repository and run or compile the raw Python scripts yourself:
 
-#Dependencies:
+# Dependencies:
 ```
 Python 3.8+
 
