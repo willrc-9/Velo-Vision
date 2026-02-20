@@ -1,7 +1,7 @@
-##VeloVision (v0.5 Beta) ⚾🎥
+# VeloVision (v0.5 Beta) ⚾🎥
 
 VeloVision is a localized, low-latency delayed video feedback system designed specifically for baseball pitchers during bullpen sessions. By utilizing a wireless catcher-POV camera and a configurable rolling frame buffer, pitchers can throw a pitch and immediately watch their own mechanics without needing a coach to manually record and play back the footage.
-#🚀 What's New in v0.5 Beta
+## 🚀 What's New in v0.5 Beta
 
 Wireless Catcher POV: Transitioned from wired USB webcams to wireless local IP camera streams.
 
@@ -13,7 +13,7 @@ Persistent Configuration: The app automatically remembers your camera URL, delay
 
 Dynamic GUI Settings: Change your IP camera URL, delay time, and slow-motion speed on the fly without restarting the application.
 
-#🛠️ Features
+## 🛠️ Features
 
 Customizable Time Delay: Set a continuous delay (e.g., 4 seconds) so you can throw, turn to the screen, and watch the pitch arrive.
 
@@ -23,36 +23,36 @@ Live Recording: Record bullpen sessions directly to .mp4 and save them locally.
 
 Cross-Platform Support: Ready to run on Windows and Linux systems.
 
-#📋 Hardware Requirements
+## 📋 Hardware Requirements
 
-    A computer running the application (placed safely near the mound or backstop).
+A computer running the application (placed safely near the mound or backstop).
 
-    An iOS/Android smartphone (to be used as the wireless camera).
+An iOS/Android smartphone (to be used as the wireless camera).
 
-    A tactical chest-rig/harness to securely mount the phone under the catcher's chest protector.
+A tactical chest-rig/harness to securely mount the phone under the catcher's chest protector.
 
-    A local Wi-Fi network (both the computer and phone must be connected to the exact same network).
+A local Wi-Fi network (both the computer and phone must be connected to the exact same network).
 
-##⚙️ Quick Start Guide
-#1. Download VeloVision
+## ⚙️ Quick Start Guide
+### 1. Download VeloVision
 
 Head over to the Releases tab on this repository and download the latest executable for your operating system:
 
-    Windows: Download the .exe file.
+Windows: Download the .exe file.
 
-    Linux: Download the Linux executable file.
+Linux: Download the Linux executable file.
 
-#2. Start the Wireless Camera (iPhone/Android)
+### 2. Start the Wireless Camera (iPhone/Android)
 
-    Download IP Camera Lite (or a similar IP webcam app) on your smartphone.
+Download IP Camera Lite (or a similar IP webcam app) on your smartphone.
 
-    Connect your phone to your local Wi-Fi network.
+Connect your phone to your local Wi-Fi network.
 
-    Open the app and tap Turn on IP Camera Server.
+Open the app and tap Turn on IP Camera Server.
 
-    Note the IP address and port displayed on the screen (e.g., http://192.168.1.50:8081).
+Note the IP address and port displayed on the screen (e.g., http://192.168.1.50:8081).
 
-#3. Launch the Application
+### 3. Launch the Application
 
 Windows: Double-click the downloaded executable.
 
@@ -63,7 +63,7 @@ chmod +x VeloVision_v0.5
 ./VeloVision_v0.5
 ```
 (Note: On your very first launch, the video screen will be black because no camera URL is configured yet.)
-#4. Configure the Stream
+### 4. Configure the Stream
 
 In the VeloVision app, click Settings > Preferences in the top menu bar.
 
@@ -77,7 +77,7 @@ Adjust your Delay (Seconds) and Replay Speed.
 
 Click Apply Settings. The stream will initialize and auto-save your setup for your next bullpen.
 
-#⌨️ Controls
+## ⌨️ Controls
 
 Spacebar - Trigger Instant Replay (Slow-motion playback of the recent buffer). Press again to cancel and return to the live delay.
 
@@ -87,7 +87,7 @@ Q - Safely quit the application and close network threads.
 
 Record Button - Click the REC button in the UI to start saving the live feed. Go to File > Save Recording... when finished to export the .mp4.
 
-#💻 For Developers
+## 💻 For Developers
 
 If you want to pull the repository and run or compile the raw Python scripts yourself:
 
@@ -101,14 +101,14 @@ Pillow
 
 tkinter
 ```
-#Linux Setup (Fedora/RHEL):
+## Linux Setup (Fedora/RHEL):
 You may need to install the underlying system GUI libraries for Tkinter to render the video frames properly before running the .py script:
 
 ```Bash
-sudo dnf install python3-tkinter tk-devel python3-pillow-tk
+dnf install python3-tkinter tk-devel python3-pillow-tk
 pip install opencv-python Pillow
 ```
-Project Structure:
+## Project Structure:
 
 VeloVision.py: The main GUI application and delay buffer logic.
 
