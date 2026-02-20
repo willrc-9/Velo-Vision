@@ -91,7 +91,7 @@ Record Button - Click the REC button in the UI to start saving the live feed. Go
 
 If you want to pull the repository and run or compile the raw Python scripts yourself:
 
-# Dependencies:
+### Dependencies:
 ```
 Python 3.8+
 
@@ -101,14 +101,14 @@ Pillow
 
 tkinter
 ```
-## Linux Setup (Fedora/RHEL):
+### Linux Setup (Fedora/RHEL):
 You may need to install the underlying system GUI libraries for Tkinter to render the video frames properly before running the .py script:
 
 ```Bash
 dnf install python3-tkinter tk-devel python3-pillow-tk
 pip install opencv-python Pillow
 ```
-## Project Structure:
+### Project Structure:
 
 VeloVision.py: The main GUI application and delay buffer logic.
 
