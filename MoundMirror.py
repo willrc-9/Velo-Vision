@@ -20,10 +20,10 @@ except ImportError:
     HAS_PYGRABBER = False
 
 
-class VeloVisionApp:
+class MoundMirrorApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("VeloVision 0.4 - Catcher POV")
+        self.root.title("MoundMirror 0.5 - Catcher POV")
         self.root.geometry("1000x700")
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -291,7 +291,7 @@ class VeloVisionApp:
         self.replay_buffer = deque(self.replay_buffer, maxlen=max_replay)
 
     def load_config(self):
-        self.config_file = "velovision_config.json"
+        self.config_file = "moundmirror_config.json"
 
         # Default fallback settings if the file doesn't exist yet
         self.iphone_url = ""
@@ -357,5 +357,5 @@ class VeloVisionApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = VeloVisionApp(root)
+    app = MoundMirrorApp(root)
     root.mainloop()
