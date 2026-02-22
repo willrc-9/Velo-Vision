@@ -1,4 +1,4 @@
-[Here you can see the new logo image, which is a tight crop of the camera with the baseball lens and "MOUND MIRROR" text, centered at the top.]
+<img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/35c70ca5-3720-4b26-bb12-aee1d159358c" />
 
 # Mound Mirror (v0.5 Beta) ⚾🎥
 
@@ -66,7 +66,7 @@ chmod +x MoundMirror_v0.5
 
 * **F** - Toggle Fullscreen mode.
 
-* **Q* - Safely quit the application and close network threads.
+* **Q** - Safely quit the application and close network threads.
 
 * **Record Button** - Click the REC button in the UI to start saving the live feed. Go to File > Save Recording... when finished to export the .mp4.
 
