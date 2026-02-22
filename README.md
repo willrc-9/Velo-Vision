@@ -46,3 +46,55 @@ Head over to the Releases tab on this repository and download the latest executa
 ```bash
 chmod +x MoundMirror_v0.5
 ./MoundMirror_v0.5
+```
+(Note: On your very first launch, the video screen will be black because no camera URL is configured yet.)
+### 4. Configure the Stream
+
+    In the Mound Mirror app, click Settings > Preferences in the top menu bar.
+
+    In the Wireless Camera URL field, enter your phone's IP address.
+
+        Crucial Formatting Note: For a stable connection, format the URL exactly like this to include the default app credentials: http://admin:admin@YOUR_IPV4_ADDRESS:PORT/video (Example: http://admin:admin@192.168.1.50:8081/video)
+
+    Adjust your Delay (Seconds) and Replay Speed.
+
+    Click Apply Settings. The stream will initialize and auto-save your setup for your next bullpen.
+
+## ⌨️ Controls
+
+* **Spacebar** - Trigger Instant Replay (Slow-motion playback of the recent buffer). Press again to cancel and return to the live delay.
+
+* **F** - Toggle Fullscreen mode.
+
+* **Q* - Safely quit the application and close network threads.
+
+* **Record Button** - Click the REC button in the UI to start saving the live feed. Go to File > Save Recording... when finished to export the .mp4.
+
+## 💻 For Developers
+
+If you want to pull the repository and run or compile the raw Python scripts yourself:
+Dependencies:
+Plaintext
+
+Python 3.8+
+opencv-python
+Pillow
+tkinter
+
+### Linux Setup (Fedora/RHEL):
+
+You may need to install the underlying system GUI libraries for Tkinter to render the video frames properly before running the .py script:
+
+```Bash
+
+dnf install python3-tkinter tk-devel python3-pillow-tk
+pip install opencv-python Pillow
+```
+
+### Project Structure:
+
+* **MoundMirror.py:** The main GUI application and delay buffer logic.
+
+* **threaded_camera.py:** The asynchronous background network capture class.
+
+* **moundmirror_config.json:** Auto-generated configuration save file.
